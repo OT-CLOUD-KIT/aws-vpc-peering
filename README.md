@@ -64,8 +64,5 @@ Check out these related projects.
 
 ### Contributors
 
-[![Shweta Tyagi][shweta_avatar]][shweta_homepage]<br/>[Shweta Tyagi][shweta_homepage]
 - [Ankit](https://www.linkedin.com/in/ankit-mishra-aab383210/) 
-
-  [shweta_homepage]: https://github.com/shwetatyagi-ot
-  [shweta_avatar]: https://img.cloudposse.com/75x75/https://github.com/shwetatyagi-ot.png
+- [Rajat Vats](https://www.linkedin.com/in/rajat-vats-32042aa9/)
