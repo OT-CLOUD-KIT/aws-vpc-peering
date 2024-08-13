@@ -1,73 +1,68 @@
+# main.tf
 provider "aws" {
-  region = var.requester_region
-  # Requester's credentials.
+  region = var.requester_region  # Requester's region
 }
 
 provider "aws" {
   alias  = "peer_acceptor_provider"
-  region = var.acceptor_region
-  # Acceptor's credentials.
+  region = var.accepter_region  # Accepter's region
 }
 
-# Create requester VPC
-resource "aws_vpc" "requester_vpc" {    
-  cidr_block = var.requester_vpc_cidr
-}
-
-data "aws_route_table" "requester_rt" {
-  vpc_id = aws_vpc.requester_vpc.id
-}
-
-# Create acceptor VPC
-resource "aws_vpc" "acceptor_vpc" {
-  provider   = aws.peer_acceptor_provider
-  cidr_block = var.acceptor_vpc_cidr
-}
-
-data "aws_route_table" "acceptor_rt" {
-  vpc_id = aws_vpc.acceptor_vpc.id 
-  provider   = aws.peer_acceptor_provider
-}
-
-data "aws_caller_identity" "peer" {
-  provider = aws.peer_acceptor_provider
-}
-
-# Requester's side of the connection.
+# Create VPC Peering Connection
 resource "aws_vpc_peering_connection" "peer" {
-  vpc_id        = aws_vpc.requester_vpc.id  
-  peer_vpc_id   = aws_vpc.acceptor_vpc.id     
-  peer_owner_id = data.aws_caller_identity.peer.account_id
-  peer_region   = var.peer_acceptor_region
-  auto_accept   = false
+  vpc_id      = var.requester_vpc_id
+  peer_vpc_id = var.accepter_vpc_id
+  auto_accept = false  
+  peer_region = var.accepter_region
 
   tags = {
-    Name = var.vpc_peering_connection_requester_name
+    Name = var.peering_connection_name
   }
 }
 
-# acceptor's side of the connection.
+# Accept the VPC Peering Connection (run in the accepter account/region)
 resource "aws_vpc_peering_connection_accepter" "peer" {
   provider                  = aws.peer_acceptor_provider
   vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
   auto_accept               = true
 
   tags = {
-    Name = var.vpc_peering_connection_acceptor_name
+    Name = "${var.peering_connection_name}-accepter"
   }
 }
 
-# Create routes from requester to acceptor 
-resource "aws_route" "requestor" {
-  route_table_id             = data.aws_route_table.requester_rt.id 
-  destination_cidr_block     = aws_vpc.acceptor_vpc.cidr_block
-  vpc_peering_connection_id  = aws_vpc_peering_connection.peer.id
+# Add routes to the requester's VPC route table
+resource "aws_route" "requester_route" {
+  count                  = length(data.aws_route_tables.requester.ids)
+  route_table_id         = data.aws_route_tables.requester.ids[count.index]
+  destination_cidr_block = data.aws_vpc.accepter.cidr_block
+  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
 }
 
-# Create routes from acceptor to Requester
-resource "aws_route" "acceptor" {
-  provider                    = aws.peer_acceptor_provider
-  route_table_id              = data.aws_route_table.acceptor_rt.id  
-  destination_cidr_block      = aws_vpc.requester_vpc.cidr_block  
-  vpc_peering_connection_id   = aws_vpc_peering_connection.peer.id
+# Add routes to the accepter's VPC route table
+resource "aws_route" "accepter_route" {
+  provider               = aws.peer_acceptor_provider
+  count                  = length(data.aws_route_tables.accepter.ids)
+  route_table_id         = data.aws_route_tables.accepter.ids[count.index]
+  destination_cidr_block = data.aws_vpc.requester.cidr_block
+  vpc_peering_connection_id = aws_vpc_peering_connection.peer.id
+}
+
+# Data resources to get existing route tables and VPC CIDR blocks
+data "aws_vpc" "requester" {
+  id = var.requester_vpc_id
+}
+
+data "aws_vpc" "accepter" {
+  provider = aws.peer_acceptor_provider
+  id       = var.accepter_vpc_id
+}
+
+data "aws_route_tables" "requester" {
+  vpc_id = var.requester_vpc_id
+}
+
+data "aws_route_tables" "accepter" {
+  provider = aws.peer_acceptor_provider
+  vpc_id   = var.accepter_vpc_id
 }
