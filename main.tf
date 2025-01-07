@@ -12,6 +12,7 @@ provider "aws" {
 resource "aws_vpc_peering_connection" "peer" {
   vpc_id      = var.requester_vpc_id
   peer_vpc_id = var.accepter_vpc_id
+  peer_owner_id = data.aws_caller_identity.peer.account_id
   auto_accept = false  
   peer_region = var.accepter_region
 
@@ -49,6 +50,10 @@ resource "aws_route" "accepter_route" {
 }
 
 # Data resources to get existing route tables and VPC CIDR blocks
+data "aws_caller_identity" "peer" {
+  provider = aws.peer_acceptor_provider
+}
+
 data "aws_vpc" "requester" {
   id = var.requester_vpc_id
 }
