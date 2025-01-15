@@ -5,50 +5,52 @@
   [opstree_homepage]: https://opstree.github.io/
   [opstree_avatar]: https://img.cloudposse.com/150x150/https://github.com/opstree.png
 
-- This repository consists of the Terraform module for AWS VPC Peering Service with in & cross region.
-- This project is a part of opstree's ot-aws initiative for terraform modules.
+- This repository provides a Terraform module for creating AWS VPC Peering connections, supporting both intra-region and cross-region configurations. 
+- This project is part of Opstree's OT-AWS initiative for Terraform modules.
 
 ## Usage
-
+`main.tf`
 ```sh
-$   cat main.tf
-/*-------------------------------------------------------*/
-module "aws_vpc_peering" {
-  source                                  = "../aws-vpc-peering"
-  requester_region                        = "us-east-1"
-  acceptor_region                    = "us-east-1"
-  requester_vpc_cidr                      = "10.0.0.0/16"
-  acceptor_vpc_cidr                       = "172.31.0.0/16"
-  vpc_peering_connection_requester_name   = "requester"
-  vpc_peering_connection_acceptor_name    = "acceptor"
+module "vpc_peering" {
+  source = "../"  # Update this path to where your module is located
+
+  requester_vpc_id         = var.requester_vpc_id
+  accepter_vpc_id          = var.accepter_vpc_id
+  requester_region         = var.requester_region
+  accepter_region          = var.accepter_region
+  peering_connection_name  = var.peering_connection_name
+  auto_accept              = var.auto_accept
+  enable_routes            = var.enable_routes
 }
-/*-------------------------------------------------------*/
 ```
-
+`output.tf`
 ```sh
-$   cat output.tf
-/*-------------------------------------------------------*/
 output "vpc_peering_id" {
   value = module.aws_vpc_peering.id
 }
-/*-------------------------------------------------------*/
 ```
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|:----:|:-----:|:-----:|
-| requester_region | The region of the requester VPC. | `string` | `us-east-1` | yes |
-| accepter_region | The region of the accepter VPC. | `string` | `us-east-1` | yes |
-| requester_vpc_cidr | The CIDR of the requester VPC. | `string` | `10.0.0.0/16` | yes |
-| accepter_vpc_cidr | The CIDR of the accepter VPC. | `string` | `172.31.0.0/16` | yes |
-| vpc_peering_connection_requester_name | The NAME of the requester VPC peering connection. | `string` | `requester` | yes |
-| vpc_peering_connection_accepter_name | The NAME of the accepter VPC peering connection. | `string` | `accepter` | yes |
+| `requester_profile` | AWS Profile name for requester VPC. | `string` | `default` | not |
+| `requester_region` | The region of the requester VPC. | `string` | n/a | yes |
+| `requester_vpc_id` | The ID of the requester VPC. | `string` | n/a | yes |
+| `acceptor_profile` | AWS Profile name for acceptor VPC. | `string` | `default` | Required in cross-account peering |
+| `accepter_region` | The region of the accepter VPC. | `string` | n/a | yes |
+| `accepter_vpc_id` | The ID of the accepter VPC. | `string` | n/a | yes |
+| `auto_accept` | Automatically accept the peering request. | `bool` | `true` | yes |
+| `enable_routes` | Enable or disable route table updates. | `string` | `true` | yes |
+| `tags` | Tags to assign to VPC peering connection. | `map` | n/a | yes |
+
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| id | The ID of the VPC Peering Connection |
+| `vpc_peering_connection_id` | The ID of the VPC Peering Connection |
+| `requester_route_table_ids` | Route table IDs in the requester VPC |
+| `accepter_route_table_ids` | Route table IDs in the accepter VPC |
 
 ## Related Projects
 
@@ -63,7 +65,5 @@ Check out these related projects.
 
 ### Contributors
 
-[![Shweta Tyagi][shweta_avatar]][shweta_homepage]<br/>[Shweta Tyagi][shweta_homepage] 
-
-  [shweta_homepage]: https://github.com/shwetatyagi-ot
-  [shweta_avatar]: https://img.cloudposse.com/75x75/https://github.com/shwetatyagi-ot.png
+- [Ankit](https://www.linkedin.com/in/ankit-mishra-aab383210/) 
+- [Rajat Vats](https://www.linkedin.com/in/rajat-vats-32042aa9/)
