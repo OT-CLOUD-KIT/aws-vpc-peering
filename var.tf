@@ -1,11 +1,17 @@
 # variables.tf
-variable "requester_vpc_id" {
-  description = "The ID of the requester VPC"
+
+###################################################
+###########  Requester VPC Details  ###############
+###################################################
+
+variable "requester_profile" {
+  description = "The profile of the requester VPC"
   type        = string
+  default     = "default"
 }
 
-variable "accepter_vpc_id" {
-  description = "The ID of the accepter VPC"
+variable "requester_vpc_id" {
+  description = "The ID of the requester VPC"
   type        = string
 }
 
@@ -14,13 +20,48 @@ variable "requester_region" {
   type        = string
 }
 
+###################################################
+###########  Acceptor VPC Details  ################
+###################################################
+
+variable "acceptor_profile" {
+  description = "The profile of the acceptor VPC"
+  type        = string
+}
+
+variable "accepter_vpc_id" {
+  description = "The ID of the accepter VPC"
+  type        = string
+}
+
 variable "accepter_region" {
   description = "The region of the accepter VPC"
   type        = string
 }
 
-variable "peering_connection_name" {
-  description = "Name tag for the VPC peering connection"
-  type        = string
-  default     = "vpc-peering-connection"
+###################################################
+##############  Peering Details  ##################
+###################################################
+
+variable "auto_accept" {
+  description = "Flag to automatically accept the peering connection"
+  type        = bool
+  default     = true
+}
+
+variable "enable_routes" {
+  description = "Flag to enable or disable route table entries"
+  type        = bool
+  default     = true
+}
+
+variable "tags" {
+  description = "A map of tags to assign to peering"
+  type        = map(string)
+  default = {
+    Name        = "ot-cloud-vpc-peering"
+    Environment = "Development"
+    Project     = "VPC Peering"
+    Owner       = "opstree"
+  }
 }
